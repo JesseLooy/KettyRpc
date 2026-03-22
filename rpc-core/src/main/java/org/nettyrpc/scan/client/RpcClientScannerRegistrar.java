@@ -12,7 +12,9 @@ import org.common.utils.RpcRequest;
 import org.nettyrpc.netty.client.RpcRequestEncoder;
 import org.nettyrpc.netty.client.RpcResponseDecoder;
 import org.nettyrpc.netty.client.RpcSendRequest;
+import org.nettyrpc.scan.client.utensil.StartNerryClient;
 import org.springframework.beans.factory.config.BeanDefinition;
+import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.beans.factory.support.GenericBeanDefinition;
 import org.springframework.context.ResourceLoaderAware;
@@ -28,6 +30,12 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * 客户端需要注册两次BeanDefinition 是因为要代替@ComponentScan的作用
+ * 把所有加了客户端的 KettyRpcClass 的都加入到Ioc容器里面。也就是不仅要
+ * 把他们所有的加了 KettyRpcRef 注解的接口都加进去，都通过代理注册，并且
+ * 本身这个类也要加入到Ioc容器里面
+ */
 @EnableKettyRpcCli
 public class RpcClientScannerRegistrar implements ImportBeanDefinitionRegistrar, ResourceLoaderAware {
 
@@ -40,6 +48,14 @@ public class RpcClientScannerRegistrar implements ImportBeanDefinitionRegistrar,
     @Override
     public void registerBeanDefinitions(AnnotationMetadata importingClassMetadata,
                                         BeanDefinitionRegistry registry) {
+
+
+        // 率先注册了 单例都完成之后的回调
+        BeanDefinitionBuilder builder =
+                BeanDefinitionBuilder.genericBeanDefinition(StartNerryClient.class);
+
+        registry.registerBeanDefinition("rpcClientInit", builder.getBeanDefinition());
+
 
         Map<String, Object> attributes =
                 importingClassMetadata.getAnnotationAttributes(EnableKettyRpcCli.class.getName());
@@ -107,8 +123,6 @@ public class RpcClientScannerRegistrar implements ImportBeanDefinitionRegistrar,
                 }
             }
         }
-        // 这里先开启一次服务，免得后面没有开启
-        startClient();
     }
 
     @Override

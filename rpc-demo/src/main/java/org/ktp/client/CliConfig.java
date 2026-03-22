@@ -2,7 +2,6 @@ package org.ktp.client;
 
 import org.nettyrpc.annotation.client.EnableKettyRpcCli;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
-import org.springframework.context.annotation.ComponentScan;
 
 @EnableKettyRpcCli()
 public class CliConfig {

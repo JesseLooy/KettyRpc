@@ -2,7 +2,6 @@ package org.nettyrpc;
 
 import org.nettyrpc.annotation.client.EnableKettyRpcCli;
 import org.nettyrpc.annotation.server.EnableKettyRpcService;
-import org.nettyrpc.test.B;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
@@ -15,7 +14,5 @@ public class App {
     public static void main(String[] args) {
         AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(App.class);
 
-        B bean = context.getBean(B.class);
-        System.out.println(bean.test());
     }
 }

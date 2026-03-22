@@ -34,7 +34,7 @@
         </dependency>
         <dependency>
             <groupId>org.ktp</groupId>
-            <artifactId>common-model</artifactId>
+            <artifactId>rpc-common-model</artifactId>
             <version>1.0-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>
