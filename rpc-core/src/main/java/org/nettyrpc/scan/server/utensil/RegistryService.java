@@ -1,4 +1,4 @@
-package org.nettyrpc.scan.client.utensil;
+package org.nettyrpc.scan.server.utensil;
 
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.SmartInitializingSingleton;
@@ -17,7 +17,13 @@ public class RegistryService implements SmartInitializingSingleton, ApplicationC
             map.forEach((k, v) -> {
                 v.forEach( method ->{
                     if(service.get(method) == null){
-                        service.put(method, context.getBean(method.split("#")[0]));
+                        Class clazz = null;
+                        try {
+                            clazz = Class.forName(method.split("#")[0]);
+                        } catch (ClassNotFoundException e) {
+                            throw new RuntimeException(e);
+                        }
+                        service.put(method, context.getBean(clazz));
                     }
                 });
             });

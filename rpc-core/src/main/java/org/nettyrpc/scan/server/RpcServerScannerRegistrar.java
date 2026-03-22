@@ -4,20 +4,20 @@ import io.netty.channel.*;
 import io.netty.channel.nio.NioIoHandler;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
-import org.nettyrpc.annotation.client.EnableKettyRpcCli;
 import org.nettyrpc.annotation.server.EnableKettyRpcService;
 import org.nettyrpc.annotation.server.KettyRpcService;
 import org.nettyrpc.netty.server.RequestHandler;
 import org.nettyrpc.netty.server.RpcRequestDecoder;
 import org.nettyrpc.netty.server.RpcResponseEncoder;
-import org.nettyrpc.scan.client.utensil.RegistryService;
+import org.nettyrpc.scan.server.utensil.RegistryService;
 import org.springframework.beans.BeansException;
-import org.springframework.beans.factory.SmartInitializingSingleton;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
+import org.springframework.beans.factory.support.GenericBeanDefinition;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.ResourceLoaderAware;
+import org.springframework.context.annotation.AnnotationBeanNameGenerator;
 import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider;
 import org.springframework.context.annotation.ImportBeanDefinitionRegistrar;
 import org.springframework.core.io.ResourceLoader;
@@ -32,6 +32,17 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+
+/**
+ * Server 端里面的注册是 找目标类里面的所有接口的不同方法，注册成服务的
+ * 把每一个不同的接口都要注册一个本类的实现，只是名字要按照接口自己的名字。
+ * 因为调用服务时候是按照接口名字来进行的查找
+ *
+ *
+ * 最新的可以改成根据类型查找，这样的话只有一个实现类是需要放到一个进入Ioc
+ * 容器的。所以只需要放入一次就行了
+ *
+  */
 public class RpcServerScannerRegistrar implements ImportBeanDefinitionRegistrar, ResourceLoaderAware,
                                                   ApplicationContextAware {
 
@@ -39,7 +50,8 @@ public class RpcServerScannerRegistrar implements ImportBeanDefinitionRegistrar,
     private ApplicationContext context;
     public static final Map<String, Map<String, Set<String>>> serviceMap = new ConcurrentHashMap<>();
     public static final Map<String, Object> service = new ConcurrentHashMap<>();
-
+    private static final AnnotationBeanNameGenerator GENERATOR =
+            new AnnotationBeanNameGenerator();
     @Override
     public void registerBeanDefinitions(AnnotationMetadata importingClassMetadata,
                                         BeanDefinitionRegistry registry) {
@@ -122,12 +134,9 @@ public class RpcServerScannerRegistrar implements ImportBeanDefinitionRegistrar,
                             // 注册进 注册中心，
                             System.out.println("TODO: 把服务注册到注册中心");
                         }
-
                     }
-
-                    registry.registerBeanDefinition(anInterface.getName(), beanDefinition);
                 }
-
+                registry.registerBeanDefinition(GENERATOR.generateBeanName(beanDefinition, registry), beanDefinition);
             }
         }
     }

@@ -14,7 +14,9 @@ import org.nettyrpc.netty.client.RpcResponseDecoder;
 import org.nettyrpc.netty.client.RpcSendRequest;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
+import org.springframework.beans.factory.support.GenericBeanDefinition;
 import org.springframework.context.ResourceLoaderAware;
+import org.springframework.context.annotation.AnnotationBeanNameGenerator;
 import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider;
 import org.springframework.context.annotation.ImportBeanDefinitionRegistrar;
 import org.springframework.core.io.ResourceLoader;
@@ -31,6 +33,10 @@ public class RpcClientScannerRegistrar implements ImportBeanDefinitionRegistrar,
 
     private ResourceLoader resourceLoader;
     public static Channel channel;
+
+    // 用于生成最原始的BeanName
+    private static final AnnotationBeanNameGenerator GENERATOR =
+            new AnnotationBeanNameGenerator();
     @Override
     public void registerBeanDefinitions(AnnotationMetadata importingClassMetadata,
                                         BeanDefinitionRegistry registry) {
@@ -68,7 +74,7 @@ public class RpcClientScannerRegistrar implements ImportBeanDefinitionRegistrar,
 
             for (BeanDefinition beanDefinition : beanDefinitions) {
                 String className = beanDefinition.getBeanClassName();
-
+                registry.registerBeanDefinition(GENERATOR.generateBeanName(beanDefinition, registry), beanDefinition);
                 String group = null, version = null;
                 Class<?> clazz = null;
                 try {
@@ -86,14 +92,16 @@ public class RpcClientScannerRegistrar implements ImportBeanDefinitionRegistrar,
                         group = annotation.group();
                         version = annotation.version();
                         // 必须是接口类型的，并且没有被添加进入过的 直接通过代理 注册到Spring 容器里面
-                        if (field.getType().isInterface() && interfaceName.add(field.getType().getName())) {
+                        String fTypeName = field.getType().getName();
+                        if (field.getType().isInterface() && interfaceName.add(fTypeName)) {
                             RpcRequest rpcRequest = new RpcRequest("","",null,null,group,version);
+                            beanDefinition = new GenericBeanDefinition();
 
                             beanDefinition.getConstructorArgumentValues().addGenericArgumentValue(field.getType());
                             beanDefinition.getConstructorArgumentValues().addGenericArgumentValue(rpcRequest);
 
                             beanDefinition.setBeanClassName(RpcFactoryBean.class.getName());
-                            registry.registerBeanDefinition(field.getType().getName(), beanDefinition);
+                            registry.registerBeanDefinition(fTypeName, beanDefinition);
                         }
                     }
                 }
