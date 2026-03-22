@@ -28,7 +28,7 @@ import java.util.Map;
 import java.util.Set;
 
 @EnableKettyRpcCli
-public class RpcClientScannerRegistrar implements ImportBeanDefinitionRegistrar, ResourceLoaderAware, SmartInitializingSingleton {
+public class RpcClientScannerRegistrar implements ImportBeanDefinitionRegistrar, ResourceLoaderAware {
 
     private ResourceLoader resourceLoader;
     public static Channel channel;
@@ -100,6 +100,8 @@ public class RpcClientScannerRegistrar implements ImportBeanDefinitionRegistrar,
                 }
             }
         }
+        // 这里先开启一次服务，免得后面没有开启
+        startClient();
     }
 
     @Override
@@ -107,37 +109,30 @@ public class RpcClientScannerRegistrar implements ImportBeanDefinitionRegistrar,
         this.resourceLoader = resourceLoader;
     }
 
-    @Override
-    public void afterSingletonsInstantiated() {
-        startClient();
-    }
-
-    private void startClient(){
-        new Thread(()->{
-            EventLoopGroup group = new MultiThreadIoEventLoopGroup(NioIoHandler.newFactory());
-            Bootstrap bootstrap = new Bootstrap();
-            try{
-                bootstrap.group(group)
-                        .channel(NioSocketChannel.class)
-                        .option(ChannelOption.SO_KEEPALIVE,true)
-                        .handler(new ChannelInitializer<SocketChannel>() {
-                            @Override
-                            protected void initChannel(SocketChannel socketChannel) throws Exception {
-                                ChannelPipeline pl = socketChannel.pipeline();
-                                pl.addLast(new RpcRequestEncoder());
-                                pl.addLast(new RpcResponseDecoder());
-                                pl.addLast(new RpcSendRequest());
-                            }
-                        });
-                // TODO: 这里端口和 服务器地址要从注册中心获取
-                System.out.println("TODO: 这里端口和 服务器地址要从注册中心获取");
-                ChannelFuture future = bootstrap.connect("127.0.0.1", 8090).sync();
-                channel = future.channel();
-            }catch (Exception e){
-                throw new RuntimeException("Unknown Exception -> " + e);
-            }
-
-        }).start();
+    public synchronized static void startClient(){
+        if(channel != null) return;
+        EventLoopGroup group = new MultiThreadIoEventLoopGroup(NioIoHandler.newFactory());
+        Bootstrap bootstrap = new Bootstrap();
+        try{
+            bootstrap.group(group)
+                    .channel(NioSocketChannel.class)
+                    .option(ChannelOption.SO_KEEPALIVE,true)
+                    .handler(new ChannelInitializer<SocketChannel>() {
+                        @Override
+                        protected void initChannel(SocketChannel socketChannel) throws Exception {
+                            ChannelPipeline pl = socketChannel.pipeline();
+                            pl.addLast(new RpcRequestEncoder());
+                            pl.addLast(new RpcResponseDecoder());
+                            pl.addLast(new RpcSendRequest());
+                        }
+                    });
+            // TODO: 这里端口和 服务器地址要从注册中心获取
+            // System.out.println("TODO: 这里端口和 服务器地址要从注册中心获取");
+            ChannelFuture future = bootstrap.connect("127.0.0.1", 8090).sync();
+            channel = future.channel();
+        }catch (Exception e){
+            throw new RuntimeException("NettyRpc Server is not running. Please start server firstly -> ");
+        }
     }
 
 }

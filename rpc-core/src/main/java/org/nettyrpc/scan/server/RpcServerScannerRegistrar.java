@@ -7,10 +7,13 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 import org.nettyrpc.annotation.client.EnableKettyRpcCli;
 import org.nettyrpc.annotation.server.EnableKettyRpcService;
 import org.nettyrpc.annotation.server.KettyRpcService;
+import org.nettyrpc.netty.server.RequestHandler;
 import org.nettyrpc.netty.server.RpcRequestDecoder;
 import org.nettyrpc.netty.server.RpcResponseEncoder;
+import org.nettyrpc.scan.client.utensil.RegistryService;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.SmartInitializingSingleton;
+import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
@@ -30,7 +33,6 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class RpcServerScannerRegistrar implements ImportBeanDefinitionRegistrar, ResourceLoaderAware,
-                                                  SmartInitializingSingleton,
                                                   ApplicationContextAware {
 
     private ResourceLoader resourceLoader;
@@ -41,6 +43,13 @@ public class RpcServerScannerRegistrar implements ImportBeanDefinitionRegistrar,
     @Override
     public void registerBeanDefinitions(AnnotationMetadata importingClassMetadata,
                                         BeanDefinitionRegistry registry) {
+
+        // 率先注册了 单例都完成之后的回调
+        BeanDefinitionBuilder builder =
+                BeanDefinitionBuilder.genericBeanDefinition(RegistryService.class);
+
+        registry.registerBeanDefinition("rpcServerInit", builder.getBeanDefinition());
+
 
         Map<String, Object> attributes =
                 importingClassMetadata.getAnnotationAttributes(EnableKettyRpcService.class.getName());
@@ -57,6 +66,7 @@ public class RpcServerScannerRegistrar implements ImportBeanDefinitionRegistrar,
         }
 
         scanClassAnnotation(basePackages, registry);
+
     }
 
     private void scanClassAnnotation(String[] basePackages, BeanDefinitionRegistry registry) {
@@ -127,29 +137,13 @@ public class RpcServerScannerRegistrar implements ImportBeanDefinitionRegistrar,
         this.resourceLoader = resourceLoader;
     }
 
-    @Override
-    public void afterSingletonsInstantiated() {
-        // TODO: 其实在这里也可以进行Bean注册到注册中心，这里是统一注册
-        System.out.println("TODO: 其实在这里也可以进行Bean注册到注册中心，这里是统一注册");
-        serviceMap.forEach((s, map) -> {
-            map.forEach((k, v) -> {
-                v.forEach( method ->{
-                    if(service.get(method) == null){
-                        service.put(method, context.getBean(method));
-                    }
-                });
-            });
-        });
-        startServer();
-
-    }
 
     @Override
     public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
         this.context = applicationContext;
     }
 
-    private void startServer(){
+    public synchronized static void startServer(){
         new Thread(()->{
             EventLoopGroup bossGroup = new MultiThreadIoEventLoopGroup(1, NioIoHandler.newFactory());
             EventLoopGroup workerGroup = new MultiThreadIoEventLoopGroup(NioIoHandler.newFactory());
@@ -164,6 +158,7 @@ public class RpcServerScannerRegistrar implements ImportBeanDefinitionRegistrar,
                                 ChannelPipeline pl = socketChannel.pipeline();
                                 pl.addLast(new RpcResponseEncoder());
                                 pl.addLast(new RpcRequestDecoder());
+                                pl.addLast(new RequestHandler());
                             }
                         });
                 bootstrap.bind(8090).sync();

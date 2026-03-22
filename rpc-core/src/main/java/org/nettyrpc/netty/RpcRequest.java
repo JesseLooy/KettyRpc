@@ -78,7 +78,7 @@ public class RpcRequest {
     @Override
     public String toString() {
         String name = serviceName + '#' + methodName + "(";
-        for (int i = 0; i < args.length; i++) {
+        for (int i = 0; args != null && i < args.length; i++) {
             if(i != args.length - 1){
                 name = name + args[i] + ",";
             }

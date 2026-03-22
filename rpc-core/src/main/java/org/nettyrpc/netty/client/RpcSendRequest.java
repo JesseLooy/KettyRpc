@@ -6,9 +6,15 @@ import io.netty.channel.SimpleChannelInboundHandler;
 import org.nettyrpc.netty.RpcRequest;
 import org.nettyrpc.netty.RpcResponse;
 
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
 public class RpcSendRequest extends SimpleChannelInboundHandler<RpcResponse> {
 
     private static ChannelHandlerContext ctx;
+
+    public static final Map<String, RpcResponse> responseMap = new ConcurrentHashMap<>();
+
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
         this.ctx = ctx;
@@ -16,7 +22,10 @@ public class RpcSendRequest extends SimpleChannelInboundHandler<RpcResponse> {
     }
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, RpcResponse rpcResponse) throws Exception {
-        System.out.println(rpcResponse);
+        responseMap.put(rpcResponse.getRequestId(), rpcResponse);
+        synchronized (RpcSendRequest.class) {
+            RpcSendRequest.class.notifyAll();
+        }
     }
 
     public static void sendRequest(RpcRequest rpcRequest){

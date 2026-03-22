@@ -1,7 +1,9 @@
 package org.nettyrpc.scan.client;
 
+import org.common.constant.Constant;
 import org.jspecify.annotations.Nullable;
 import org.nettyrpc.netty.RpcRequest;
+import org.nettyrpc.netty.RpcResponse;
 import org.nettyrpc.netty.client.RpcSendRequest;
 import org.springframework.beans.factory.FactoryBean;
 
@@ -18,7 +20,7 @@ public class RpcFactoryBean implements FactoryBean{
     }
 
     @Override
-    public @Nullable Object getObject() throws Exception {
+    public @Nullable Object getObject() {
         return Proxy.newProxyInstance(
                 interfaceClass.getClassLoader(),
                 new Class[] { interfaceClass },
@@ -26,12 +28,31 @@ public class RpcFactoryBean implements FactoryBean{
                     @Override
                     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
                         // TODO: 请求Netty 拿到返回结果
-                        System.out.println("Netty 发送请求代理，并且等待结果的返回");
-                        if(RpcClientScannerRegistrar.channel == null) throw new RuntimeException("channel is not ready");
+                        // System.out.println("Netty 发送请求代理，并且等待结果的返回");
+
+
+
+                        if(RpcClientScannerRegistrar.channel == null) {
+                            synchronized (RpcClientScannerRegistrar.class) {}
+                        }
+                        rpcRequest.setRequestId(String.valueOf(Constant.requestID.getAndIncrement()));
                         rpcRequest.setArgs(args);
                         rpcRequest.setMethodName(method.getName());
                         rpcRequest.setServiceName(interfaceClass.getName());
-                        return RpcClientScannerRegistrar.channel.writeAndFlush(rpcRequest);
+                        RpcClientScannerRegistrar.channel.writeAndFlush(rpcRequest);
+                        RpcResponse response = null;
+                        while(response == null){
+
+                            synchronized (RpcSendRequest.class) {
+                                response = RpcSendRequest.responseMap.get(rpcRequest.getRequestId());
+
+                                if(response == null) RpcSendRequest.class.wait();
+                            }
+
+
+                            // rpcRequest.getRequestId()
+                        }
+                        return response.getData();
                     }
                 }
         );
