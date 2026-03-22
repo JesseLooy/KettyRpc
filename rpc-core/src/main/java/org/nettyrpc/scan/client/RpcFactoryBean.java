@@ -2,8 +2,8 @@ package org.nettyrpc.scan.client;
 
 import org.common.constant.Constant;
 import org.jspecify.annotations.Nullable;
-import org.nettyrpc.netty.RpcRequest;
-import org.nettyrpc.netty.RpcResponse;
+import org.common.utils.RpcRequest;
+import org.common.utils.RpcResponse;
 import org.nettyrpc.netty.client.RpcSendRequest;
 import org.springframework.beans.factory.FactoryBean;
 

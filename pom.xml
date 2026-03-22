@@ -12,7 +12,7 @@
         <module>rpc-registry</module>
         <module>rpc-core</module>
         <module>rpc-demo</module>
-        <module>common-model</module>
+        <module>rpc-common-model</module>
     </modules>
 
     <properties>

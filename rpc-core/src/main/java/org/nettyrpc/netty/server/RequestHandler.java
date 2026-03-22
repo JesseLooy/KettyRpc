@@ -2,8 +2,8 @@ package org.nettyrpc.netty.server;
 
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
-import org.nettyrpc.netty.RpcRequest;
-import org.nettyrpc.netty.RpcResponse;
+import org.common.utils.RpcRequest;
+import org.common.utils.RpcResponse;
 import org.nettyrpc.scan.server.RpcServerScannerRegistrar;
 
 import java.lang.reflect.Method;

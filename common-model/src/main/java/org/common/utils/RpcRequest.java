@@ -1,4 +1,4 @@
-package org.nettyrpc.netty;
+package org.common.utils;
 
 
 public class RpcRequest {

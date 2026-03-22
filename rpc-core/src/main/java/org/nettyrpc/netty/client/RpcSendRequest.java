@@ -1,10 +1,9 @@
 package org.nettyrpc.netty.client;
 
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.SimpleChannelInboundHandler;
-import org.nettyrpc.netty.RpcRequest;
-import org.nettyrpc.netty.RpcResponse;
+import org.common.utils.RpcRequest;
+import org.common.utils.RpcResponse;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;

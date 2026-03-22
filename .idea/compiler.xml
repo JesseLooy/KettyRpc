@@ -8,7 +8,7 @@
         <outputRelativeToContentRoot value="true" />
         <module name="rpc-registry" />
         <module name="rpc-demo" />
-        <module name="common-model" />
+        <module name="rpc-common-model" />
         <module name="rpc-core" />
       </profile>
     </annotationProcessing>

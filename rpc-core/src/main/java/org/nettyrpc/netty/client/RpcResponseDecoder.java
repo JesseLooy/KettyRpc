@@ -3,8 +3,8 @@ package org.nettyrpc.netty.client;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
-import org.nettyrpc.netty.KryoSerializer;
-import org.nettyrpc.netty.RpcResponse;
+import org.common.utils.KryoSerializer;
+import org.common.utils.RpcResponse;
 
 import java.util.List;
 

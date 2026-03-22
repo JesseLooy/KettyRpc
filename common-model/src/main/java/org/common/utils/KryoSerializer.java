@@ -1,4 +1,4 @@
-package org.nettyrpc.netty;
+package org.common.utils;
 
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
